@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <% if (htmlWebpackPlugin.options.devServer.inline) { %>
+    <script src="/webpack-dev-server.js"></script>
+    <% } %>
+  </head>
+  <body>
+    <h1><%= htmlWebpackPlugin.options.title %></h1>
+    <main>
+      <ul class="output"></ul>
+    </main>
+  </body>
+</html>

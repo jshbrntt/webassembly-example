@@ -1,0 +1,13 @@
+version: '3'
+services:
+  server:
+    command: npm run watch
+    env_file: .env
+    image: synthecypher/webassembly-example
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/usr/src/webassembly-example
+      - node_modules:/usr/src/webassembly-example/node_modules
+volumes:
+  node_modules:
