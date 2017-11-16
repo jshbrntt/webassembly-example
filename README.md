@@ -8,7 +8,7 @@ Using Rust and Webpack.
 ## Getting Started
 
 ```shell
-git clone git@github.com:synthecypher/webassembly-example.git
+git clone https://github.com/synthecypher/webassembly-example.git
 cd webassembly-example
 make run
 # Go to http://localhost:8080
