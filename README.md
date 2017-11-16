@@ -16,4 +16,7 @@ make run
 # Browser will automatically refresh
 ```
 
+## Demo
+![Demo](/demo.gif?raw=true "Demo")
+
 [docker]: https://www.docker.com/community-edition
