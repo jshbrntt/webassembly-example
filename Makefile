@@ -1,10 +1,10 @@
 .PHONY: build
 build:
-	docker-compose build --pull
+	docker-compose build --pull image
 
 .PHONY: run
 run:
-	docker-compose up --force-recreate
+	docker-compose up --force-recreate server
 
 .PHONY: stop
 stop:

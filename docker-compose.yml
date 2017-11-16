@@ -9,5 +9,8 @@ services:
     volumes:
       - .:/usr/src/webassembly-example
       - node_modules:/usr/src/webassembly-example/node_modules
+  image:
+    build: .
+    image: synthecypher/webassembly-example
 volumes:
   node_modules:
