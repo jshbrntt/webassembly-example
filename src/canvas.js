@@ -1,6 +1,3 @@
-import window from 'window'
-import wasm from './main.rs'
-
 const colorSelector = {
   rgbas: [],
   colors: ['1abc9c', '16a085', '2ecc71', '27ae60', '4caf50', '8bc34a', 'cddc39', '3498db', '2980b9', '34495e', '2c3e50', '2196f3', '03a9f4', '00bcd4', '009688', 'e74c3c', 'c0392b', 'f44336', 'e67e22', 'd35400', 'f39c12', 'ff9800', 'ff5722',
@@ -23,7 +20,9 @@ const colorSelector = {
 }
 colorSelector.init()
 
-wasm.initialize({
+import canvas from './canvas.rs'
+
+canvas.initialize({
   noExitRuntime: true
 }).then(Module => {
   const update = Module.cwrap('update', null, ['number', 'number', 'number'])
@@ -51,7 +50,7 @@ wasm.initialize({
     buf[i] = false
   }
   const tick = () => {
-    window.requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       update(bufsize, buf.byteOffset, column)
       for (let i = 0; i < bufsize; i += 1) {
         if (buf[i]) {

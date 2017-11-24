@@ -19,7 +19,8 @@ config.output = {
 
 config.externals = {
   fs: true,
-  path: true
+  path: true,
+  window: 'window'
 }
 
 config.module = {
@@ -62,7 +63,10 @@ config.devServer = {
     colors: true,
     chunks: false
   },
-  inline: true
+  inline: true,
+  mimeTypes: {
+    'application/wasm': ['wasm']
+  }
 }
 
 config.plugins = [
