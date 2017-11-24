@@ -1,76 +1,48 @@
-# Node.js Base Image
-FROM node:8
-
-# Install Rust
-# https://github.com/rust-lang-nursery/docker-rust/blob/6424dba66086036a0cedde6c86c281d892305f95/1.21.0/jessie/Dockerfile
+# Base Images
+FROM node:carbon as node
+FROM rust:jessie as rust
+# Node.js
+ENV NODE_VERSION 8.9.1
+ENV YARN_VERSION 1.3.2
+COPY --from=node /opt/yarn                   /opt/yarn
+COPY --from=node /usr/local/bin/node         /usr/local/bin/node
+COPY --from=node /usr/local/bin/nodejs       /usr/local/bin/nodejs
+COPY --from=node /usr/local/bin/npm          /usr/local/bin/npm
+COPY --from=node /usr/local/bin/npx          /usr/local/bin/npx
+COPY --from=node /usr/local/bin/yarn         /usr/local/bin/yarn
+COPY --from=node /usr/local/bin/yarnpkg      /usr/local/bin/yarnpkg
+COPY --from=node /usr/local/include/node     /usr/local/include/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+# Rust
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH
-
-RUN set -eux; \
-    \
-# this "case" statement is generated via "update.sh"
-    dpkgArch="$(dpkg --print-architecture)"; \
-    case "${dpkgArch##*-}" in \
-        amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='f5833a64fd549971be80fa42cffc6c5e7f51c4f443cd46e90e4c17919c24481f' ;; \
-        armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='67a98a67f7f7bf19c5cde166499acb8299f2f8fa88c155093df53b66da1f512a' ;; \
-        arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='82fe368c4ebf1683d57e137242793a4417042639aace8bd514601db7d79d3645' ;; \
-        i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='7a1c085591f6c1305877919f8495c04a1c97546d001d1357a7a879cedea5afbb' ;; \
-        *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
-    esac; \
-    \
-    url="https://static.rust-lang.org/rustup/archive/1.6.0/${rustArch}/rustup-init"; \
-    wget "$url"; \
-    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
-    chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --default-toolchain 1.21.0; \
-    rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version;
-
-# Install the WebAssembly Emscripten compile target for Rust
-RUN rustup target add wasm32-unknown-emscripten
-
-# Install Emscripten SDK.
-# https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
-
-# Install Emscripten SDK dependencies.
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
+COPY --from=rust /usr/local/cargo                                                 /usr/local/cargo
+COPY --from=rust /usr/local/rustup                                                /usr/local/rustup
+COPY --from=rust /usr/local/rustup/settings.toml                                  /usr/local/rustup/settings.toml
+COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/bin /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/bin
+COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/etc /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/etc
+COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/lib /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/lib
+# Emscripten
+ENV PATH=/usr/lib/emsdk-portable:$PATH \
+    PATH=/usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/bin:$PATH \
+    PATH=/usr/lib/emsdk-portable/emscripten/incoming:$PATH
+RUN rustup target add wasm32-unknown-emscripten \
+ && echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
  && apt-get update && apt-get install -y \
     build-essential \
     default-jre \
  && apt-get -t jessie-backports install -y cmake \
- && rm -rf /var/lib/apt/lists/*
-
-# Install Emscripten SDK for Linux.
-RUN wget -q https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz -P /tmp && \
-    tar -xvf /tmp/emsdk-portable.tar.gz -C /usr/lib && \
-    ln -s /usr/lib/emsdk-portable/emsdk /usr/bin/emsdk && \
-    rm /tmp/emsdk-portable.tar.gz
-
-# Setup Emscripten SDK.
-RUN emsdk update \
+ && rm -rf /var/lib/apt/lists/* \
+ && wget -q https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz -P /tmp \
+ && tar -xvf /tmp/emsdk-portable.tar.gz -C /usr/lib \
+ && ln -s /usr/lib/emsdk-portable/emsdk /usr/bin/emsdk \
+ && rm /tmp/emsdk-portable.tar.gz \
+ && emsdk update \
  && emsdk install --build=Release sdk-incoming-64bit binaryen-master-64bit \
- && emsdk activate --build=Release sdk-incoming-64bit binaryen-master-64bit
-
-# Reduce image size by remove source files.
-RUN rm -rf /usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/lib \
+ && emsdk activate --build=Release sdk-incoming-64bit binaryen-master-64bit \
+ && rm -rf /usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/lib \
  && rm -rf /usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/tools \
  && rm -rf /usr/lib/emsdk-portable/clang/fastcomp/src \
  && rm -rf /usr/lib/emsdk-portable/emscripten/incoming/.git \
  && rm -rf /usr/lib/emsdk-portable/emscripten/incoming/tests
-
-ENV PATH=/usr/lib/emsdk-portable:$PATH \
-    PATH=/usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/bin:$PATH \
-    PATH=/usr/lib/emsdk-portable/emscripten/incoming:$PATH
-
-# Setup Node Project.
-WORKDIR /usr/src/webassembly-example
-COPY package.json .
-COPY yarn.lock .
-RUN yarn install && yarn cache clean
-
-# Default Command.
-CMD npm run build
