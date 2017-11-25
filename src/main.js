@@ -1,4 +1,3 @@
-import window from 'window'
 import wasm from './main.rs'
 
 const colorSelector = {
@@ -15,8 +14,6 @@ const colorSelector = {
   },
   init: function () {
     this.colors.forEach((color, i) => {
-      console.log(this.rgba(color))
-      console.log(i)
       this.rgbas[i] = this.rgba(color)
     })
   }
@@ -51,8 +48,10 @@ wasm.initialize({
     buf[i] = false
   }
   const tick = () => {
-    window.requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      let t0 = performance.now()
       update(bufsize, buf.byteOffset, column)
+      let t1 = performance.now()
       for (let i = 0; i < bufsize; i += 1) {
         if (buf[i]) {
           let color = colorSelector.rgbas[(~~(colorSelector.colors.length * (i / buf.length)))]

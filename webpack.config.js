@@ -63,10 +63,7 @@ config.devServer = {
     colors: true,
     chunks: false
   },
-  inline: true,
-  mimeTypes: {
-    'application/wasm': ['wasm']
-  }
+  inline: true
 }
 
 config.plugins = [

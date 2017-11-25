@@ -1,34 +1,9 @@
 # Base Images
 FROM node:carbon as node
 FROM rust:jessie as rust
-# Node.js
-ENV NODE_VERSION 8.9.1
-ENV YARN_VERSION 1.3.2
-COPY --from=node /opt/yarn                   /opt/yarn
-COPY --from=node /usr/local/bin/node         /usr/local/bin/node
-COPY --from=node /usr/local/bin/nodejs       /usr/local/bin/nodejs
-COPY --from=node /usr/local/bin/npm          /usr/local/bin/npm
-COPY --from=node /usr/local/bin/npx          /usr/local/bin/npx
-COPY --from=node /usr/local/bin/yarn         /usr/local/bin/yarn
-COPY --from=node /usr/local/bin/yarnpkg      /usr/local/bin/yarnpkg
-COPY --from=node /usr/local/include/node     /usr/local/include/node
-COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
-# Rust
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
-COPY --from=rust /usr/local/cargo                                                 /usr/local/cargo
-COPY --from=rust /usr/local/rustup                                                /usr/local/rustup
-COPY --from=rust /usr/local/rustup/settings.toml                                  /usr/local/rustup/settings.toml
-COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/bin /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/bin
-COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/etc /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/etc
-COPY --from=rust /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/lib /usr/local/rustup/toolchains/1.21.0-x86_64-unknown-linux-gnu/lib
+FROM buildpack-deps:jessie
 # Emscripten
-ENV PATH=/usr/lib/emsdk-portable:$PATH \
-    PATH=/usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/bin:$PATH \
-    PATH=/usr/lib/emsdk-portable/emscripten/incoming:$PATH
-RUN rustup target add wasm32-unknown-emscripten \
- && echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
+RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
  && apt-get update && apt-get install -y \
     build-essential \
     default-jre \
@@ -46,3 +21,34 @@ RUN rustup target add wasm32-unknown-emscripten \
  && rm -rf /usr/lib/emsdk-portable/clang/fastcomp/src \
  && rm -rf /usr/lib/emsdk-portable/emscripten/incoming/.git \
  && rm -rf /usr/lib/emsdk-portable/emscripten/incoming/tests
+ENV PATH=/usr/lib/emsdk-portable:$PATH \
+    PATH=/usr/lib/emsdk-portable/clang/fastcomp/build_incoming_64/bin:$PATH \
+    PATH=/usr/lib/emsdk-portable/emscripten/incoming:$PATH
+# Node.js and Yarn
+COPY --from=node /opt/yarn /opt/yarn
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/include/node /usr/local/include/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+ && ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+ && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+ && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn \
+ && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg
+ENV NODE_VERSION 8.9.1
+ENV YARN_VERSION 1.3.2
+# Rust
+COPY --from=rust /usr/local/cargo /usr/local/cargo
+COPY --from=rust /usr/local/rustup /usr/local/rustup
+COPY --from=rust /usr/local/rustup/settings.toml /usr/local/rustup/settings.toml
+COPY --from=rust /usr/local/rustup/toolchains /usr/local/rustup/toolchains
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+RUN rustup target add wasm32-unknown-emscripten
+# Project
+WORKDIR /usr/src/webassembly-example
+COPY package.json .
+COPY yarn.lock .
+RUN yarn install && yarn cache clean
+# Default Command.
+CMD npm run build
