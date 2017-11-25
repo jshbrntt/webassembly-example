@@ -1,6 +1,10 @@
+.PHONY: image
+image:
+	docker-compose build --pull image
+
 .PHONY: build
 build:
-	docker-compose build --pull image
+	docker-compose run build
 
 .PHONY: run
 run:

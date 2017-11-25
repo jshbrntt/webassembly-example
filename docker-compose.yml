@@ -1,5 +1,12 @@
 version: '3'
 services:
+  publish:
+    command: npm run publish
+    env_file: .env
+    image: synthecypher/webassembly-example
+    volumes:
+      - .:/usr/src/webassembly-example
+      - node_modules:/usr/src/webassembly-example/node_modules
   server:
     command: npm run watch
     env_file: .env
