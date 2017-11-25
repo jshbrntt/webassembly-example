@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html style="margin: 0; overflow: hidden">
+  <head>
+    <meta charset="UTF-8">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <% if (htmlWebpackPlugin.options.devServer.inline) { %>
+    <script src="/webpack-dev-server.js"></script>
+    <% } %>
+  </head>
+  <body style="margin: 0">
+    <canvas></canvas>
+  </body>
+</html>

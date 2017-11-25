@@ -1,0 +1,6 @@
+[package]
+name = "webassembly-example"
+version = "1.0.0"
+authors = ["Joshua Barnett <jbacontrol@gmail.com>"]
+
+[dependencies]
