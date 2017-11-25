@@ -46,7 +46,8 @@ config.module = {
       use: {
         loader: 'rust-wasm-loader',
         options: {
-          path: ''
+          path: '',
+          release: true
         }
       }
     }
