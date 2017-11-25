@@ -19,7 +19,8 @@ config.output = {
 
 config.externals = {
   fs: true,
-  path: true
+  path: true,
+  window: 'window'
 }
 
 config.module = {
